@@ -39,7 +39,7 @@ jobs:
 
       - name: Prepare APK Output Name
         run: |
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk deepignite_compass-v0.1.0.apk
+          cp build/app/outputs/flutter-apk/app-release.apk deepignite_compass-v0.1.0.apk
 
       - name: Create Release and Upload APK
         uses: softprops/action-gh-release@v2
