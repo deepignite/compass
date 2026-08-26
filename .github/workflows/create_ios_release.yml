@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
+  workflow_dispatch: 
 
 jobs:
   build-ios:
@@ -36,32 +36,17 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Create Podfile with iOS 14 Target
+      - name: Re-generate iOS Project Files & Update Deployment Target
         run: |
-          mkdir -p ios
-          cat << 'EOF' > ios/Podfile
-          platform :ios, '14.0'
-
-          target 'Runner' do
-            use_frameworks!
-            use_modular_headers!
-          end
-
-          post_install do |installer|
-            installer.pods_project.targets.each do |target|
-              target.build_configurations.each do |config|
-                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
-              end
-            end
-          end
-          EOF
+          flutter create . --platforms=ios
+          sed -i '' "s/platform :ios, '.*/platform :ios, '15.0'/" ios/Podfile
 
       - name: Install CocoaPods Dependencies
         run: |
           cd ios
           pod install --repo-update
 
-      - name: Build Unsigned iOS Frameworks via Flutter CLI
+      - name: Build Unsigned iOS App
         run: |
           flutter build ios --release --no-codesign --no-tree-shake-icons
 
