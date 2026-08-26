@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   build-ios:
@@ -36,10 +36,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Re-generate iOS Project Files & Update Deployment Target
+      - name: Re-generate iOS Project Files & Set Target to 15.0
         run: |
           flutter create . --platforms=ios
-          sed -i '' "s/platform :ios, '.*/platform :ios, '15.0'/" ios/Podfile
+          sed -i '' "s/^# platform :ios, '.*/platform :ios, '15.0'/" ios/Podfile
+          sed -i '' "s/^platform :ios, '.*/platform :ios, '15.0'/" ios/Podfile
 
       - name: Install CocoaPods Dependencies
         run: |
