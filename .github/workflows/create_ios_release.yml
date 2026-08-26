@@ -26,10 +26,12 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Ensure Assets Exist
+      - name: Ensure Assets Directory & File Exist
         run: |
-          mkdir -p assets
-          touch assets/compass.png
+          mkdir -p assets/images assets/icons
+          touch assets/images/compass.png
+          touch assets/icons/icon.png
+          touch assets/icons/icon_fg.png
 
       - name: Install dependencies
         run: flutter pub get
@@ -59,32 +61,21 @@ jobs:
           cd ios
           pod install --repo-update
 
-      - name: Build Xcode Archive (Unsigned Standard ARM64)
+      - name: Build Unsigned iOS Frameworks via Flutter CLI
         run: |
-          xcodebuild build \
-            -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath build/ios \
-            ARCHS="arm64" \
-            ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM=""
+          flutter build ios --release --no-codesign --no-tree-shake-icons
 
       - name: Package into .ipa
         run: |
           mkdir -p build/ios/Payload
-          cp -r build/ios/Build/Products/Release-iphoneos/Runner.app build/ios/Payload/
+          cp -r build/ios/iphoneos/Runner.app build/ios/Payload/
           cd build/ios
-          zip -r deepignite_compass-v0.1.0.ipa Payload
+          zip -r deepignite_compass-v0.1.0-ios.ipa Payload
 
       - name: Create Release and Upload IPA
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.1.0
-          files: build/ios/deepignite_compass-v0.1.0.ipa
+          files: build/ios/deepignite_compass-v0.1.0-ios.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
