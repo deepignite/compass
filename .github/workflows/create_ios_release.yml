@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch: 
 
 jobs:
   build-ios:
@@ -29,18 +28,30 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Setup iOS Podfile and Set Deployment Target
+      - name: Create Podfile with iOS 14 Target
         run: |
-          if [ ! -f ios/Podfile ]; then
-            cd ios && pod init && cd ..
-          fi
-          sed -i '' 's/# platform :ios, .*/platform :ios, '\''14.0'\''/' ios/Podfile
-          sed -i '' 's/platform :ios, .*/platform :ios, '\''14.0'\''/' ios/Podfile
+          mkdir -p ios
+          cat << 'EOF' > ios/Podfile
+          platform :ios, '14.0'
+
+          target 'Runner' do
+            use_frameworks!
+            use_modular_headers!
+          end
+
+          post_install do |installer|
+            installer.pods_project.targets.each do |target|
+              target.build_configurations.each do |config|
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+              end
+            end
+          end
+          EOF
 
       - name: Install CocoaPods Dependencies
         run: |
           cd ios
-          pod install
+          pod install --repo-update
 
       - name: Build Xcode Archive (Unsigned ARM64/ARM64e)
         run: |
@@ -61,12 +72,12 @@ jobs:
           mkdir -p build/ios/Payload
           cp -r build/ios/Build/Products/Release-iphoneos/Runner.app build/ios/Payload/
           cd build/ios
-          zip -r deepignite_compass-v0.1.0.ipa Payload
+          zip -r app-release-unsigned.ipa Payload
 
       - name: Create Release and Upload IPA
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.1.0
-          files: build/ios/deepignite_compass-v0.1.0.ipa
+          files: build/ios/app-release-unsigned.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
