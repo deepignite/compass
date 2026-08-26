@@ -4,8 +4,8 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-  
+  workflow_dispatch: 
+
 jobs:
   build-ios:
     runs-on: macos-latest
@@ -29,20 +29,35 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build iOS App Bundle
-        run: flutter build ios --release --no-codesign
+      - name: Install CocoaPods Dependencies
+        run: |
+          cd ios
+          pod install
+
+      - name: Build Xcode Archive (Unsigned ARM64/ARM64e)
+        run: |
+          xcodebuild build \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build/ios \
+            ARCHS="arm64 arm64e" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
 
       - name: Package into .ipa
         run: |
-          cd build/ios/iphoneos
-          mkdir Payload
-          mv Runner.app Payload/
+          mkdir -p build/ios/Payload
+          cp -r build/ios/Build/Products/Release-iphoneos/Runner.app build/ios/Payload/
+          cd build/ios
           zip -r app-release-unsigned.ipa Payload
 
       - name: Create Release and Upload IPA
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.1.0
-          files: build/ios/iphoneos/app-release-unsigned.ipa
+          files: build/ios/app-release-unsigned.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
