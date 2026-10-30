@@ -1,0 +1,67 @@
+name: Build Unsigned iOS IPA and Create Release
+
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+jobs:
+    build-ios:
+        runs-on: macos-14
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Java Development Kit (JDK)
+              uses: actions/setup-java@v4
+              with:
+                  distribution: "zulu"
+                  java-version: "17"
+
+            - name: Set up Flutter
+              uses: subosito/flutter-action@v2
+              with:
+                  channel: "stable"
+                  cache: true
+
+            - name: Ensure Assets Directory & File Exist
+              run: |
+                  mkdir -p assets/images assets/icons
+                  touch assets/images/compass.png
+                  touch assets/icons/icon.png
+                  touch assets/icons/icon_fg.png
+
+            - name: Install dependencies
+              run: flutter pub get
+
+            - name: Re-generate iOS Project Files & Set Target to 15.0
+              run: |
+                  flutter create . --platforms=ios
+                  sed -i '' "s/^# platform :ios, '.*/platform :ios, '15.0'/" ios/Podfile
+                  sed -i '' "s/^platform :ios, '.*/platform :ios, '15.0'/" ios/Podfile
+
+            - name: Install CocoaPods Dependencies
+              run: |
+                  cd ios
+                  pod install --repo-update
+
+            - name: Build Unsigned iOS App
+              run: |
+                  flutter build ios --release --no-codesign --no-tree-shake-icons
+
+            - name: Package into .ipa
+              run: |
+                  mkdir -p build/ios/Payload
+                  cp -r build/ios/iphoneos/Runner.app build/ios/Payload/
+                  cd build/ios
+                  zip -r deepignite_compass-v0.2.0-ios.ipa Payload
+
+            - name: Create Release and Upload IPA
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: v0.2.0
+                  files: build/ios/deepignite_compass-v0.2.0-ios.ipa
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
