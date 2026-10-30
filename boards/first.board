@@ -1,0 +1,14 @@
+{
+    "canvases": [
+        {
+            "x": -395.0,
+            "y": -46.0,
+            "w": 393.0,
+            "h": 808.0,
+            "widget": "const PrivacyPolicyScreen()",
+            "deps": [
+                "lib/privacy_policy.dart"
+            ]
+        }
+    ]
+}

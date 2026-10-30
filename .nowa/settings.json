@@ -1,0 +1,8 @@
+{
+    "version": "3.16.3",
+    "app": {
+        "name": "compass",
+        "bundleId": "com.example.compassYgYQPh"
+    },
+    "main": {}
+}

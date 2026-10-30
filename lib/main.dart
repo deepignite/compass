@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:compass/lib/privacy_policy.dart';
+import 'package:nowa_runtime/nowa_runtime.dart';
 
 const String _kThemeModeKey = 'theme_mode';
 
-// Global notifier for the app's ThemeMode
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
 void main() async {
@@ -44,22 +45,27 @@ String _themeModeToString(ThemeMode mode) {
   }
 }
 
+@NowaGenerated()
 class MyApp extends StatelessWidget {
+  @NowaGenerated({'loader': 'auto-constructor'})
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
-      builder: (context, mode, _) {
-        return MaterialApp(
-          theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-          darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
-          themeMode: mode,
-          debugShowCheckedModeBanner: false,
-          home: const MyHomePage(),
-        );
-      },
+      builder: (context, mode, _) => MaterialApp(
+        theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
+        themeMode: mode,
+        debugShowCheckedModeBanner: false,
+        home: const MyHomePage(),
+        routes: {
+          'MyHomePage': (context) => const MyHomePage(),
+          'SettingsScreen': (context) => const SettingsScreen(),
+          'PrivacyPolicyScreen': (context) => const PrivacyPolicyScreen(),
+        },
+      ),
     );
   }
 }
@@ -122,7 +128,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-// Filtered accelerometer values container
 class FilteredAccelerometer {
   final double x;
   final double y;
@@ -130,8 +135,6 @@ class FilteredAccelerometer {
   const FilteredAccelerometer(this.x, this.y, this.z);
 }
 
-// A filtered accelerometer stream that applies a simple low-pass filter and
-// suppresses small-magnitude changes to reduce jitter/disturbance.
 Stream<FilteredAccelerometer> filteredAccelerometerStream({
   double alpha = 0.15,
   double threshold = 0.12,
@@ -391,33 +394,15 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            title: const Text('Privacy notice'),
-            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('Privacy Policy'),
+            leading: const Icon(Icons.privacy_tip_rounded),
             onTap: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const PrivacyScreen()));
+              Navigator.push(context, 
+                MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+              );
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class PrivacyScreen extends StatelessWidget {
-  const PrivacyScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Privacy notice')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: const Text(
-          'Privacy notice placeholder. This demo reads sensor values locally and does not transmit data. Update this page with your real privacy policy.',
-          style: TextStyle(fontSize: 16),
-        ),
       ),
     );
   }
