@@ -2,6 +2,11 @@ name: Build Unsigned iOS IPA and Create Release
 
 on:
     workflow_dispatch:
+        inputs:
+            version:
+                description: "Release version number, without the v prefix"
+                required: true
+                type: string
 
 permissions:
     contents: write
@@ -9,6 +14,8 @@ permissions:
 jobs:
     build-ios:
         runs-on: macos-14
+        env:
+            VERSION: ${{ inputs.version }}
 
         steps:
             - name: Checkout repository
@@ -56,12 +63,12 @@ jobs:
                   mkdir -p build/ios/Payload
                   cp -r build/ios/iphoneos/Runner.app build/ios/Payload/
                   cd build/ios
-                  zip -r deepignite_compass-v0.2.0-ios.ipa Payload
+                  zip -r "deepignite_compass-v${VERSION}-ios.ipa" Payload
 
             - name: Create Release and Upload IPA
               uses: softprops/action-gh-release@v2
               with:
-                  tag_name: v0.2.0
-                  files: build/ios/deepignite_compass-v0.2.0-ios.ipa
+                  tag_name: v${{ env.VERSION }}
+                  files: build/ios/deepignite_compass-v${{ env.VERSION }}-ios.ipa
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
