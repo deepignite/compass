@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:compass/lib/privacy_policy.dart';
+import 'package:compass/privacy_policy.dart';
+import 'open_source_licenses.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 
 const String _kThemeModeKey = 'theme_mode';
@@ -40,7 +41,6 @@ String _themeModeToString(ThemeMode mode) {
     case ThemeMode.dark:
       return 'dark';
     case ThemeMode.system:
-    default:
       return 'system';
   }
 }
@@ -136,28 +136,29 @@ class FilteredAccelerometer {
 }
 
 Stream<FilteredAccelerometer> filteredAccelerometerStream({
-  double alpha = 0.15,
-  double threshold = 0.12,
+  double alpha = 0.2,
 }) {
   double fx = 0, fy = 0, fz = 0;
-  double prevMag = 0;
+  var hasInitialSample = false;
 
-  // Use the non-deprecated package stream as source
-  return accelerometerEventStream().transform(
+  return accelerometerEventStream(
+    samplingPeriod: SensorInterval.gameInterval,
+  ).transform(
     StreamTransformer<AccelerometerEvent, FilteredAccelerometer>.fromHandlers(
       handleData:
           (AccelerometerEvent event, EventSink<FilteredAccelerometer> sink) {
-            fx = alpha * event.x + (1 - alpha) * fx;
-            fy = alpha * event.y + (1 - alpha) * fy;
-            fz = alpha * event.z + (1 - alpha) * fz;
-
-            final mag = math.sqrt(fx * fx + fy * fy + fz * fz);
-            if ((mag - prevMag).abs() > threshold) {
-              prevMag = mag;
-              // Emit filtered values so consumers get smoothed data
-              sink.add(FilteredAccelerometer(fx, fy, fz));
+            if (!hasInitialSample) {
+              fx = event.x;
+              fy = event.y;
+              fz = event.z;
+              hasInitialSample = true;
+            } else {
+              fx = alpha * event.x + (1 - alpha) * fx;
+              fy = alpha * event.y + (1 - alpha) * fy;
+              fz = alpha * event.z + (1 - alpha) * fz;
             }
-            // otherwise drop the sample to avoid UI jitter
+
+            sink.add(FilteredAccelerometer(fx, fy, fz));
           },
     ),
   );
@@ -171,6 +172,14 @@ class CompassPage extends StatefulWidget {
 }
 
 class _CompassPageState extends State<CompassPage> {
+  late final Stream<CompassEvent>? _compassStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _compassStream = FlutterCompass.events;
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -180,7 +189,7 @@ class _CompassPageState extends State<CompassPage> {
         double size = math.min(width, height) * 0.9;
 
         return StreamBuilder<CompassEvent>(
-          stream: FlutterCompass.events,
+          stream: _compassStream,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Center(
@@ -200,38 +209,58 @@ class _CompassPageState extends State<CompassPage> {
               );
             }
 
-            int ang = direction.round();
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                // Compass Image
-                Container(
-                  width: size,
-                  height: size,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFFEBEBEB),
-                  ),
-                  child: Transform.rotate(
-                    angle: (direction * (math.pi / 180) * -1),
-                    child: Image.asset('assets/compass.png'),
-                  ),
+            final ang = direction.round() % 360;
+            return Center(
+              child: SizedBox.square(
+                dimension: size,
+                child: Stack(
+                  fit: StackFit.expand,
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFFEBEBEB),
+                      ),
+                    ),
+                    TweenAnimationBuilder<double>(
+                      tween: _ShortestAngleTween(
+                        end: direction * (math.pi / 180),
+                      ),
+                      duration: const Duration(milliseconds: 100),
+                      curve: Curves.easeOut,
+                      builder: (context, angle, child) =>
+                          Transform.rotate(angle: -angle, child: child),
+                      child: Image.asset(
+                        'assets/images/compass.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    Center(
+                      child: Text(
+                        "$ang°",
+                        style: const TextStyle(
+                          color: Color(0xFF333333),
+                          fontSize: 56,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          width: 4,
+                          height: 30,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                // Heading Text
-                Text(
-                  "$ang°",
-                  style: const TextStyle(
-                    color: Color(0xFF333333),
-                    fontSize: 56,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                // Indicator Line
-                Positioned(
-                  top: (height - size) / 2,
-                  child: Container(width: 4, height: 30, color: Colors.red),
-                ),
-              ],
+              ),
             );
           },
         );
@@ -248,10 +277,18 @@ class LevelPage extends StatefulWidget {
 }
 
 class _LevelPageState extends State<LevelPage> {
+  late final Stream<FilteredAccelerometer> _accelerometerStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _accelerometerStream = filteredAccelerometerStream();
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<FilteredAccelerometer>(
-      stream: filteredAccelerometerStream(),
+      stream: _accelerometerStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Center(child: Text("Error loading level sensors"));
@@ -325,6 +362,18 @@ class _LevelPageState extends State<LevelPage> {
   }
 }
 
+class _ShortestAngleTween extends Tween<double> {
+  _ShortestAngleTween({required double end}) : super(end: end);
+
+  @override
+  double lerp(double t) {
+    final start = begin ?? 0;
+    final finish = end ?? start;
+    final delta = ((finish - start + math.pi) % (2 * math.pi)) - math.pi;
+    return start + delta * t;
+  }
+}
+
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -356,27 +405,27 @@ class SettingsScreen extends StatelessWidget {
                     themeNotifier.value = m;
                   }
 
-                  return Column(
-                    children: [
-                      RadioListTile<ThemeMode>(
-                        title: const Text('System'),
-                        value: ThemeMode.system,
-                        groupValue: mode,
-                        onChanged: (v) => v != null ? save(v) : null,
-                      ),
-                      RadioListTile<ThemeMode>(
-                        title: const Text('Light'),
-                        value: ThemeMode.light,
-                        groupValue: mode,
-                        onChanged: (v) => v != null ? save(v) : null,
-                      ),
-                      RadioListTile<ThemeMode>(
-                        title: const Text('Dark'),
-                        value: ThemeMode.dark,
-                        groupValue: mode,
-                        onChanged: (v) => v != null ? save(v) : null,
-                      ),
-                    ],
+                  return RadioGroup<ThemeMode>(
+                    groupValue: mode,
+                    onChanged: (value) {
+                      if (value != null) save(value);
+                    },
+                    child: Column(
+                      children: [
+                        RadioListTile<ThemeMode>(
+                          title: const Text('System'),
+                          value: ThemeMode.system,
+                        ),
+                        RadioListTile<ThemeMode>(
+                          title: const Text('Light'),
+                          value: ThemeMode.light,
+                        ),
+                        RadioListTile<ThemeMode>(
+                          title: const Text('Dark'),
+                          value: ThemeMode.dark,
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
@@ -386,10 +435,11 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Open source licenses'),
             leading: const Icon(Icons.code),
             onTap: () {
-              showLicensePage(
-                context: context,
-                applicationName: 'Compass',
-                applicationVersion: '1.0.0',
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const OpenSourceLicensesPage(),
+                ),
               );
             },
           ),
@@ -397,7 +447,8 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Privacy Policy'),
             leading: const Icon(Icons.privacy_tip_rounded),
             onTap: () {
-              Navigator.push(context, 
+              Navigator.push(
+                context,
                 MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
               );
             },

@@ -1,30 +1,68 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:compass/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    themeNotifier.value = ThemeMode.system;
+  });
+
+  testWidgets('switches between Compass and Level pages', (tester) async {
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(
+      find.descendant(of: find.byType(AppBar), matching: find.text('Compass')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))
+          .currentIndex,
+      0,
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(find.text('Level').last);
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(
+      tester
+          .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))
+          .currentIndex,
+      1,
+    );
+  });
+
+  testWidgets('saves the selected theme', (tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Theme'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    expect(themeNotifier.value, ThemeMode.dark);
+  });
+
+  testWidgets('shows only licenses for packages used by the app', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open source licenses'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('flutter_compass'), findsOneWidget);
+    expect(find.text('sensors_plus'), findsOneWidget);
+    expect(find.text('shared_preferences'), findsOneWidget);
+    expect(find.text('flutter_markdown'), findsOneWidget);
+    expect(find.text('nowa_runtime'), findsOneWidget);
+    expect(find.text('url_launcher'), findsNothing);
+    expect(find.text('cupertino_icons'), findsNothing);
   });
 }

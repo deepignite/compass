@@ -4,13 +4,12 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
-  // Your complete template stored as a clean Markdown string
   static const String _privacyPolicyMarkdown = '''
 # Privacy Policy for Compass
 
 **Effective Date:** 30-10-2026  
-**Company Name:** DeepIgnite™ 
-**Support Email:** support@deepignite.useinbox.email 
+**Company Name:** DeepIgnite™  
+**Support Email:** support@deepignite.useinbox.email
 
 ---
 
@@ -58,33 +57,65 @@ If you have any questions or concerns about this Privacy Policy or our data prac
 * **Website:** https://deepignite.pages.dev
 ''';
 
+  MarkdownStyleSheet _buildMarkdownStyleSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final baseTextStyle =
+        theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16);
+
+    return MarkdownStyleSheet.fromTheme(theme).copyWith(
+      p: baseTextStyle.copyWith(height: 1.55),
+      h1:
+          theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            height: 1.3,
+            color: theme.colorScheme.primary,
+          ) ??
+          const TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
+      h2:
+          theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            height: 1.3,
+          ) ??
+          const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+      h3:
+          theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+          ) ??
+          const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+      listBullet: baseTextStyle.copyWith(
+        color: theme.colorScheme.primary,
+        fontWeight: FontWeight.w600,
+      ),
+      listIndent: 20,
+      blockSpacing: 8,
+      a: baseTextStyle.copyWith(
+        color: theme.colorScheme.primary,
+        decoration: TextDecoration.underline,
+      ),
+      blockquote: baseTextStyle.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontStyle: FontStyle.italic,
+      ),
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Privacy Policy'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Privacy Policy'), centerTitle: true),
       body: SafeArea(
-        child: Markdown(
-          data: _privacyPolicyMarkdown,
-          selectable: true, // Allows users to highlight and copy text like the email
-          padding: const EdgeInsets.all(16.0),
-          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-            h1: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blueAccent,
-                ),
-            h2: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  margin: const EdgeInsets.only(top: 16.0, bottom: 8.0),
-                ),
-            p: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  height: 1.5, // Improves readability line-spacing
-                ),
-            listBullet: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.blueAccent,
-                ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Markdown(
+            data: _privacyPolicyMarkdown,
+            selectable: true,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shrinkWrap: false,
+            styleSheet: _buildMarkdownStyleSheet(context),
           ),
         ),
       ),
