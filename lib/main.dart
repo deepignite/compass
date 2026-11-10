@@ -5,7 +5,7 @@ import 'package:flutter_compass/flutter_compass.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:compass/privacy_policy.dart';
-import 'open_source_licenses.dart';
+import 'package:compass/open_source_licenses.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 
 const String _kThemeModeKey = 'theme_mode';
