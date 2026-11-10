@@ -40,10 +40,18 @@ jobs:
         run: |
           flutter pub get
 
+      - name: Build APK
+        run: |
+          flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons
+
       - name: Force fix for flutter_inappwebview
         run: |
           echo -e "\ndependency_overrides:\n  flutter_inappwebview_android: ^1.1.4" >> pubspec.yaml
           cat pubspec.yaml # Optional: prints the file to logs to verify it worked
+
+      - name: Build APK
+        run: |
+          flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v7
