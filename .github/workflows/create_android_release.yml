@@ -24,10 +24,10 @@ jobs:
             - name: Set up Java Development Kit (JDK)
               uses: actions/setup-java@v6
               with:
-                  distribution: "zulu"
-                  java-version: "25"
+                  distribution: "temurin"
+                  java-version: "17"
             - name: Set up Flutter
-              uses: subosito/flutter-action@v2.23.0
+              uses: subosito/flutter-action@v2
               with:
                   channel: "stable"
                   cache: true
@@ -45,8 +45,10 @@ jobs:
                   storeFile=release.jks
                   EOF
 
-            - name: Install dependencies
-              run: flutter pub get
+            - name: Install dependencies and clean
+              run: |
+                  flutter clean
+                  flutter pub get
 
             - name: Force fix for flutter_inappwebview
               run: |
