@@ -47,7 +47,7 @@ jobs:
 
       - name: Force fix for flutter_inappwebview
         run: |
-          echo -e "\ndependency_overrides:\n  flutter_inappwebview_android: ^1.1.4" >> pubspec.yaml
+          echo -e "\ndependency_overrides:\n  flutter_inappwebview_android: ^1.1.3" >> pubspec.yaml
           cat pubspec.yaml # Optional: prints the file to logs to verify it worked
 
       - name: Build APK
