@@ -25,15 +25,15 @@ jobs:
 
       - name: Decode Keystore
         run: |
-          echo "${{ secrets.JAVA_KEYSTORE }}" | base64 --decode > app/release.jks
+          echo "${{ secrets.JAVA_KEYSTORE }}" | base64 --decode > android/app/release.jks
 
       - name: Create key.properties
         run: |
-          cat <<EOF > key.properties
+          cat <<EOF > android/key.properties
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.KEY_PASSWORD }}
           keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=app/release.jks
+          storeFile=release.jks
           EOF
 
       - name: Run clean and pub get
@@ -53,5 +53,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 1 # Automatically deletes after 1 day
