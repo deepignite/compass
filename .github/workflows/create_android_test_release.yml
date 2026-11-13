@@ -25,7 +25,7 @@ jobs:
 
       - name: Decode Keystore
         run: |
-          echo "${{ secrets.JAVA_KEYSTORE }}" | base64 --decode > android/app/release.jks
+          echo "${{ secrets.JAVA_KEYSTORE }}" | base64 --decode > android/release.jks
 
       - name: Create key.properties
         run: |
