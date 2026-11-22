@@ -45,14 +45,15 @@ jobs:
                   storeFile=release.jks
                   EOF
 
-            - name: Install dependencies and clean
+            - name: Clean, Get Dependencies, and Upgrade Packages
               run: |
                   flutter clean
                   flutter pub get
+                  flutter pub upgrade --major-versions
 
             - name: Patch flutter_inappwebview_android ProGuard reference
               run: |
-                  find /home/runner/.pub-cache/hosted/pub.dev/flutter_inappwebview_android-1.1.3 -name "build.gradle" -exec sed -i "s/'proguard-android.txt'/'proguard-android-optimize.txt'/g" {} +
+                  find /home/runner/.pub-cache/hosted/pub.dev/flutter_inappwebview_android* -name "build.gradle" -exec sed -i "s/'proguard-android.txt'/'proguard-android-optimize.txt'/g" {} +
 
             - name: Build ARM64-v8a APK
               run: flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons
