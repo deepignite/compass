@@ -55,7 +55,7 @@ jobs:
                   find /home/runner/.pub-cache/hosted/pub.dev/flutter_inappwebview_android* -name "build.gradle" -exec sed -i "s/'proguard-android.txt'/'proguard-android-optimize.txt'/g" {} +
 
             - name: Build ARM64-v8a APK
-              run: flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons
+              run: flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons --verbose
 
             - name: Prepare APK Output Name
               run: |
