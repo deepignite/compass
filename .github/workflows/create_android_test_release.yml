@@ -36,11 +36,10 @@ jobs:
           storeFile=release.jks
           EOF
 
-      - name: Clean, Get Dependencies, and Upgrade Packages
+      - name: Clean and Get Dependencies
         run: |
           flutter clean
           flutter pub get
-          flutter pub upgrade --major-versions
 
       - name: Patch flutter_inappwebview_android ProGuard reference
         run: |
